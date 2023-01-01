@@ -20,6 +20,7 @@ socks.createServer((info, accept, deny) => {
                     info.dstPort,
                     (err, stream) => {
       if (err) {
+        console.log(err)
         conn.end();
         return deny();
       }
@@ -34,8 +35,9 @@ socks.createServer((info, accept, deny) => {
       }
     });
   }).on('error', (err) => {
+    console.log(err)
     deny();
   }).connect(sshConfig);
-}).listen(1080, 'localhost', () => {
-  console.log('SOCKSv5 proxy server started on port 1080');
+}).listen(8080, 'localhost', () => {
+  console.log('SOCKSv5 proxy server started on port 8080');
 }).useAuth(socks.auth.None());
