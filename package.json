@@ -1,0 +1,23 @@
+{
+  "name": "sshproxy",
+  "version": "1.0.0",
+  "description": "a proxy which leverage ssh dynamic port forwarding. it is used as a chrome extendsion.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loveczp/SshProxy.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/loveczp/SshProxy/issues"
+  },
+  "homepage": "https://github.com/loveczp/SshProxy#readme",
+  "dependencies": {
+    "socksv5": "^0.0.6",
+    "ssh2": "^1.11.0"
+  }
+}
