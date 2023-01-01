@@ -1,2 +1,2 @@
 a proxy which leverage ssh dynamic port forwarding.
-it is used as a chrome extendsion.
+it is used as a browser extendsion.
