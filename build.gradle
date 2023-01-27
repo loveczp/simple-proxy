@@ -1,0 +1,26 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.0.1'
+	id 'io.spring.dependency-management' version '1.1.0'
+	id "com.google.osdetector" version "1.7.1"
+}
+
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '17'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'io.netty:netty-all:4.1.87.Final'
+	implementation( 'io.netty:netty-example:4.1.87.Final'){
+		exclude group: "io.netty", module: "netty-tcnative"
+	}
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
