@@ -3,9 +3,7 @@ package com.example.demo;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
@@ -25,15 +23,15 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
 
     private void createOutChannel(ChannelHandlerContext ctx, String host) throws InterruptedException {
         Bootstrap strap = new Bootstrap();
-        strap.group(new NioEventLoopGroup())
-                .channel(NioSocketChannel.class)
+        strap.group(ctx.channel().eventLoop())
+                .channel(ctx.channel().getClass())
                 .option(ChannelOption.TCP_NODELAY, true)
                 .handler(new ChannelInitializer<SocketChannel>() { // (4)
                     @Override
                     public void initChannel(SocketChannel ch) {
                         ch.pipeline()
                                 .addLast(new LoggingHandler(LogLevel.INFO))
-                                .addLast(new HttpServerCodec())
+                                .addLast(new HttpClientCodec())
                                 .addLast(new BackendHandler(ctx.channel()));
                     }
                 });
