@@ -10,9 +10,13 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.example.util.ServerUtil;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+
+import javax.net.ssl.SSLException;
+import java.security.cert.CertificateException;
 
 public class Application {
     private int port;
@@ -22,17 +26,20 @@ public class Application {
     }
 
     public void run() throws Exception {
+
         EventLoopGroup bossGroup = new NioEventLoopGroup(); // (1)
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
+            var context = ServerUtil.buildSslContext();
             ServerBootstrap b = new ServerBootstrap(); // (2)
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.INFO))
                     .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
                         @Override
-                        public void initChannel(SocketChannel ch) {
+                        public void initChannel(SocketChannel ch) throws CertificateException, SSLException {
                             ch.pipeline()
+                                    .addLast(context.newHandler(ch.alloc()))
                                     .addLast(new HttpServerCodec())
                                     .addLast(new FrontHandler());
                         }
@@ -42,7 +49,7 @@ public class Application {
             // Bind and start to accept incoming connections.
             ChannelFuture f = b.bind(port).sync(); // (7)
 
-            System.out.println("server is up on port: "+port);
+            System.out.println("server is up on port: " + port);
             // Wait until the server socket is closed.
             // In this example, this does not happen, but you can do that to gracefully
             // shut down your server.
