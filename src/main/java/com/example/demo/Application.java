@@ -36,9 +36,9 @@ public class Application {
                         @Override
                         public void initChannel(SocketChannel ch) throws CertificateException, SSLException {
                             ch.pipeline()
-                                    .addLast(sslContext.newHandler(ch.alloc()))
-                                    .addLast(new HttpServerCodec())
-                                    .addLast(new FrontHandler());
+                                    .addLast("log", sslContext.newHandler(ch.alloc()))
+                                    .addLast("http", new HttpServerCodec())
+                                    .addLast("front", new FrontHandler());
                         }
                     }).option(ChannelOption.SO_BACKLOG, 128)
                     .childOption(ChannelOption.SO_KEEPALIVE, true);

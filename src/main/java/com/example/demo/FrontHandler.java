@@ -12,17 +12,24 @@ import java.net.InetSocketAddress;
 
 public class FrontHandler extends ChannelInboundHandlerAdapter {
 
+    Channel backendChannel;
+
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws InterruptedException {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof HttpRequest) {
             var req = (HttpRequest) msg;
-            createOutChannel(ctx, req.headers().get(HttpHeaderNames.HOST),80);
-        }else{
-            System.out.println("none http request: "+msg.getClass());
+            String[] hostport = req.headers().get("Host").split(":");
+            String host = hostport[0];
+            Integer port = Integer.valueOf(hostport.length == 1 ? "80" : hostport[1]);
+            createOutChannel(ctx, host, port);
+        } else {
+            System.out.println("******write msg to backend channel");
+            System.out.println("******pipeline when tunneling: " + ctx.pipeline().toString());
+            backendChannel.writeAndFlush(msg);
         }
     }
 
-    private void createOutChannel(ChannelHandlerContext ctx, String host, Integer port) throws InterruptedException {
+    private void createOutChannel(ChannelHandlerContext ctx, String host, Integer port) {
         Bootstrap strap = new Bootstrap();
         strap.group(ctx.channel().eventLoop())
                 .channel(ctx.channel().getClass())
@@ -32,15 +39,19 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
                     public void initChannel(SocketChannel ch) {
                         ch.pipeline()
                                 .addLast(new LoggingHandler(LogLevel.INFO))
-                                .addLast(new HttpClientCodec())
                                 .addLast(new BackendHandler(ctx.channel()));
                     }
                 });
-        strap.connect(new InetSocketAddress("www.google.com", port));
+        ChannelFuture channelFuture = strap.connect(new InetSocketAddress(host, port));
+        channelFuture.addListener((ChannelFutureListener) future1 -> {
+            HttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+            ctx.writeAndFlush(resp).addListener((ChannelFutureListener) future2 -> ctx.pipeline().remove("http"));
+        });
+        backendChannel = channelFuture.channel();
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
     }
 }
