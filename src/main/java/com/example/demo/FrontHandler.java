@@ -15,13 +15,14 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws InterruptedException {
         if (msg instanceof HttpRequest) {
-            System.out.println(msg);
             var req = (HttpRequest) msg;
-            createOutChannel(ctx, req.headers().get(HttpHeaderNames.HOST));
+            createOutChannel(ctx, req.headers().get(HttpHeaderNames.HOST),80);
+        }else{
+            System.out.println("none http request: "+msg.getClass());
         }
     }
 
-    private void createOutChannel(ChannelHandlerContext ctx, String host) throws InterruptedException {
+    private void createOutChannel(ChannelHandlerContext ctx, String host, Integer port) throws InterruptedException {
         Bootstrap strap = new Bootstrap();
         strap.group(ctx.channel().eventLoop())
                 .channel(ctx.channel().getClass())
@@ -35,8 +36,7 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
                                 .addLast(new BackendHandler(ctx.channel()));
                     }
                 });
-        strap.connect(new InetSocketAddress("www.google.com", 80));
-
+        strap.connect(new InetSocketAddress("www.google.com", port));
     }
 
     @Override

@@ -10,49 +10,42 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.example.util.ServerUtil;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.util.SelfSignedCertificate;
 
 import javax.net.ssl.SSLException;
 import java.security.cert.CertificateException;
 
 public class Application {
-    private int port;
 
-    public Application(int port) {
-        this.port = port;
-    }
+    public static void main(String[] args) throws Exception {
 
-    public void run() throws Exception {
-
-        EventLoopGroup bossGroup = new NioEventLoopGroup(); // (1)
+        EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
-            var context = ServerUtil.buildSslContext();
-            ServerBootstrap b = new ServerBootstrap(); // (2)
+            SelfSignedCertificate ssc = new SelfSignedCertificate();
+            var sslContext = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey()).build();
+            ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .handler(new LoggingHandler(LogLevel.INFO))
-                    .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
+                    .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         public void initChannel(SocketChannel ch) throws CertificateException, SSLException {
                             ch.pipeline()
-                                    .addLast(context.newHandler(ch.alloc()))
+                                    .addLast(sslContext.newHandler(ch.alloc()))
                                     .addLast(new HttpServerCodec())
                                     .addLast(new FrontHandler());
                         }
-                    }).option(ChannelOption.SO_BACKLOG, 128)          // (5)
-                    .childOption(ChannelOption.SO_KEEPALIVE, true); // (6)
+                    }).option(ChannelOption.SO_BACKLOG, 128)
+                    .childOption(ChannelOption.SO_KEEPALIVE, true);
 
-            // Bind and start to accept incoming connections.
-            ChannelFuture f = b.bind(port).sync(); // (7)
 
-            System.out.println("server is up on port: " + port);
-            // Wait until the server socket is closed.
-            // In this example, this does not happen, but you can do that to gracefully
-            // shut down your server.
+            ChannelFuture f = b.bind(8080).sync();
+            System.out.println("server is up on port: " + 8080);
             f.channel().closeFuture().sync();
         } finally {
             workerGroup.shutdownGracefully();
@@ -60,11 +53,4 @@ public class Application {
         }
     }
 
-    public static void main(String[] args) throws Exception {
-        int port = 8080;
-        if (args.length > 0) {
-            port = Integer.parseInt(args[0]);
-        }
-        new Application(port).run();
-    }
 }
