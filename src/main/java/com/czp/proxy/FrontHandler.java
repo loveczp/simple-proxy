@@ -5,6 +5,8 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 
 import java.net.InetSocketAddress;
 
@@ -19,10 +21,13 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
             if (((HttpRequest) msg).method().equals("CONNECT") == false) {
                 ctx.fireExceptionCaught(new Exception("http method is not CONNECT. http request:\n" + msg + "\n"));
                 ctx.close();
+                return;
             }
+            System.out.printf("*** request head line**** : %s , %s  , %s", req.method(), req.uri(), req.protocolVersion());
             if (req.headers() == null || req.headers().get("Host") == null) {
                 ctx.fireExceptionCaught(new Exception("Host is null. http request:\n" + msg + "\n"));
                 ctx.close();
+                return;
             }
             String[] hostport = req.headers().get("Host").split(":");
             String host = hostport[0];
@@ -42,7 +47,7 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
                     @Override
                     public void initChannel(SocketChannel ch) {
                         ch.pipeline()
-//                                .addLast(new LoggingHandler(LogLevel.INFO))
+                                .addLast(new LoggingHandler(LogLevel.INFO))
                                 .addLast(new BackendHandler(ctx.channel()));
                     }
                 });
