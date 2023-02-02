@@ -18,12 +18,11 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof HttpRequest) {
             var req = (HttpRequest) msg;
-            if (((HttpRequest) msg).method().equals("CONNECT") == false) {
+            if (((HttpRequest) msg).method().name().equals("CONNECT") == false) {
                 ctx.fireExceptionCaught(new Exception("http method is not CONNECT. http request:\n" + msg + "\n"));
                 ctx.close();
                 return;
             }
-            System.out.printf("*** request head line**** : %s , %s  , %s", req.method(), req.uri(), req.protocolVersion());
             if (req.headers() == null || req.headers().get("Host") == null) {
                 ctx.fireExceptionCaught(new Exception("Host is null. http request:\n" + msg + "\n"));
                 ctx.close();
@@ -47,8 +46,8 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
                     @Override
                     public void initChannel(SocketChannel ch) {
                         ch.pipeline()
-                                .addLast(new LoggingHandler(LogLevel.INFO))
-                                .addLast(new BackendHandler(ctx.channel()));
+//                                .addLast("log", new LoggingHandler(LogLevel.INFO))
+                                .addLast("back", new BackendHandler(ctx.channel()));
                     }
                 });
         ChannelFuture channelFuture = strap.connect(new InetSocketAddress(host, port));
@@ -63,6 +62,6 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
         ctx.close();
-        this.backendChannel.close();
+//        this.backendChannel.close();
     }
 }

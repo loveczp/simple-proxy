@@ -36,7 +36,8 @@ public class Application {
                         @Override
                         public void initChannel(SocketChannel ch) throws CertificateException, SSLException {
                             ch.pipeline()
-//                                    .addLast("log", sslContext.newHandler(ch.alloc()))
+//                                    .addLast("log", new LoggingHandler(LogLevel.INFO))
+                                    .addLast("ssl", sslContext.newHandler(ch.alloc()))
                                     .addLast("http", new HttpServerCodec())
                                     .addLast("front", new FrontHandler());
                         }
