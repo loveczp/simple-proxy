@@ -17,7 +17,12 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof HttpRequest) {
             var req = (HttpRequest) msg;
             if (((HttpRequest) msg).method().equals("CONNECT") == false) {
-                ctx.fireExceptionCaught(new Exception("http method is not CONNECT"));
+                ctx.fireExceptionCaught(new Exception("http method is not CONNECT. http request:\n" + msg + "\n"));
+                ctx.close();
+            }
+            if (req.headers() == null || req.headers().get("Host") == null) {
+                ctx.fireExceptionCaught(new Exception("Host is null. http request:\n" + msg + "\n"));
+                ctx.close();
             }
             String[] hostport = req.headers().get("Host").split(":");
             String host = hostport[0];
@@ -52,5 +57,7 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
+        ctx.close();
+        this.backendChannel.close();
     }
 }

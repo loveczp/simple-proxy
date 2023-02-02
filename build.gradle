@@ -21,13 +21,18 @@ dependencies {
 
 
 jar {
+	exclude('META-INF/*.DSA')
+	exclude('META-INF/*.SF')
+	exclude('META-INF/*.RSA')
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	manifest {
-		attributes(
-				'Main-Class': 'com.czp.proxy.Application'
-		)
+		attributes "Main-Class": "com.czp.proxy.Application"
+	}
+
+	from {
+		configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
 	}
 }
-
 
 tasks.named('test') {
 	useJUnitPlatform()
