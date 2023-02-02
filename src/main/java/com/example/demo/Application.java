@@ -1,6 +1,5 @@
 package com.example.demo;
 
-
 import io.netty.bootstrap.ServerBootstrap;
 
 import io.netty.channel.ChannelFuture;
@@ -14,7 +13,6 @@ import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.util.SelfSignedCertificate;
 
 import javax.net.ssl.SSLException;
 import java.security.cert.CertificateException;
@@ -25,9 +23,11 @@ public class Application {
 
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
+        var cert = Application.class.getClassLoader().getResourceAsStream("cert.pem");
+        var key = Application.class.getClassLoader().getResourceAsStream("key.pem");
         try {
-            SelfSignedCertificate ssc = new SelfSignedCertificate();
-            var sslContext = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey()).build();
+            var sslContext = SslContextBuilder.forServer(cert, key)
+                    .build();
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)

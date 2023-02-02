@@ -18,13 +18,14 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof HttpRequest) {
             var req = (HttpRequest) msg;
+            if (((HttpRequest) msg).method().equals("CONNECT") == false) {
+                ctx.fireExceptionCaught(new Exception("http method is not CONNECT"));
+            }
             String[] hostport = req.headers().get("Host").split(":");
             String host = hostport[0];
             Integer port = Integer.valueOf(hostport.length == 1 ? "80" : hostport[1]);
             createOutChannel(ctx, host, port);
         } else {
-            System.out.println("******write msg to backend channel");
-            System.out.println("******pipeline when tunneling: " + ctx.pipeline().toString());
             backendChannel.writeAndFlush(msg);
         }
     }
@@ -34,7 +35,7 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
         strap.group(ctx.channel().eventLoop())
                 .channel(ctx.channel().getClass())
                 .option(ChannelOption.TCP_NODELAY, true)
-                .handler(new ChannelInitializer<SocketChannel>() { // (4)
+                .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     public void initChannel(SocketChannel ch) {
                         ch.pipeline()
