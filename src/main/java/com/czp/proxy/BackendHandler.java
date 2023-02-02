@@ -1,8 +1,7 @@
-package com.example.demo;
+package com.czp.proxy;
 
 
 import io.netty.channel.*;
-import io.netty.handler.codec.http.*;
 
 
 public class BackendHandler extends ChannelInboundHandlerAdapter {

@@ -1,12 +1,10 @@
-package com.example.demo;
+package com.czp.proxy;
 
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.*;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 
 import java.net.InetSocketAddress;
 
@@ -39,7 +37,7 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
                     @Override
                     public void initChannel(SocketChannel ch) {
                         ch.pipeline()
-                                .addLast(new LoggingHandler(LogLevel.INFO))
+//                                .addLast(new LoggingHandler(LogLevel.INFO))
                                 .addLast(new BackendHandler(ctx.channel()));
                     }
                 });

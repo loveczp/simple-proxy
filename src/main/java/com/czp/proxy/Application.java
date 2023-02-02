@@ -1,4 +1,4 @@
-package com.example.demo;
+package com.czp.proxy;
 
 import io.netty.bootstrap.ServerBootstrap;
 
@@ -36,7 +36,7 @@ public class Application {
                         @Override
                         public void initChannel(SocketChannel ch) throws CertificateException, SSLException {
                             ch.pipeline()
-                                    .addLast("log", sslContext.newHandler(ch.alloc()))
+//                                    .addLast("log", sslContext.newHandler(ch.alloc()))
                                     .addLast("http", new HttpServerCodec())
                                     .addLast("front", new FrontHandler());
                         }

@@ -1,4 +1,4 @@
-package com.example.demo.example;
+package com.czp.proxy.example;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
