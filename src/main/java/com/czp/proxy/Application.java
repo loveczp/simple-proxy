@@ -27,8 +27,6 @@ public class Application {
         var cert = Application.class.getClassLoader().getResourceAsStream("cert.pem");
         var key = Application.class.getClassLoader().getResourceAsStream("key.pem");
         try {
-
-
             SslContext clientSslContext = SslContextBuilder.forClient().build();
             SslContext serverSslContext = SslContextBuilder.forServer(cert, key)
                     .build();
