@@ -9,9 +9,11 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 
 import javax.net.ssl.SSLException;
@@ -26,7 +28,8 @@ public class Application {
         var cert = Application.class.getClassLoader().getResourceAsStream("cert.pem");
         var key = Application.class.getClassLoader().getResourceAsStream("key.pem");
         try {
-            var sslContext = SslContextBuilder.forServer(cert, key)
+            SslContext clientSslContext = SslContextBuilder.forClient().build();
+            SslContext serverSslContext = SslContextBuilder.forServer(cert, key)
                     .build();
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
@@ -36,10 +39,11 @@ public class Application {
                         @Override
                         public void initChannel(SocketChannel ch) throws CertificateException, SSLException {
                             ch.pipeline()
+                                    .addLast("ssl", serverSslContext.newHandler(ch.alloc()))
 //                                    .addLast("log", new LoggingHandler(LogLevel.INFO))
-                                    .addLast("ssl", sslContext.newHandler(ch.alloc()))
                                     .addLast("http", new HttpServerCodec())
-                                    .addLast("front", new FrontHandler());
+                                    .addLast("aggregator", new HttpObjectAggregator(1048576))
+                                    .addLast("front", new FrontHandler(clientSslContext));
                         }
                     }).option(ChannelOption.SO_BACKLOG, 128)
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
