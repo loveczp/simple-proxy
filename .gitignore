@@ -1,4 +1,8 @@
 /.idea/
-/gradle/
-/.gradle/
-/build/
+**/*.class
+/server/.idea/
+/server/gradle/
+/server/.gradle/
+/server/build/
+/server/bin/
+/browser-extension/.idea/
