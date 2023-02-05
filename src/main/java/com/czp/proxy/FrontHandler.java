@@ -23,8 +23,8 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws URISyntaxException {
-        if (msg instanceof HttpRequest) {
-            HttpRequest req = (HttpRequest) msg;
+        if (msg instanceof FullHttpRequest) {
+            HttpRequest req = (FullHttpRequest) msg;
             String method = req.method().name();
             String hostport = req.headers().get("Host");
             String[] hostportArray = hostport.split(":");
@@ -37,14 +37,7 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
                 handleHealthRequest(ctx, req);
             } else if (req.uri().contains(hostport)) {
                 //http proxy
-                System.out.println("orig req:\n" + req + "\n");
-                String originalUri = req.uri();
-                req.headers().remove(HttpHeaderNames.PROXY_CONNECTION);
-                int hostIndex = originalUri.indexOf(hostport);
-                String path = originalUri.substring(hostIndex + hostport.length());
-                req.setUri(path);
-                System.out.println("new req:\n" + req + "\n");
-                createHttpOutChannel(ctx, host, port, req.uri(), req);
+                createHttpOutChannel(ctx, host, port, req);
             } else {
                 ctx.fireExceptionCaught(new RuntimeException("wrong http request:" + msg));
                 ctx.close();
@@ -72,13 +65,16 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
         ChannelFuture channelFuture = strap.connect(new InetSocketAddress(host, port));
         channelFuture.addListener(f1 -> {
             var resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-            ctx.writeAndFlush(resp).addListener(f2 -> ctx.pipeline().remove("http"));
+            ctx.writeAndFlush(resp).addListener(f2 -> {
+                ctx.pipeline().remove("http");
+                ctx.pipeline().remove("aggregator");
+            });
         });
         backendChannel = channelFuture.channel();
     }
 
 
-    private void createHttpOutChannel(ChannelHandlerContext ctx, String host, Integer port, String originalUri, HttpRequest req) {
+    private void createHttpOutChannel(ChannelHandlerContext ctx, String host, Integer port, HttpRequest req) {
         Bootstrap strap = new Bootstrap();
         strap.group(ctx.channel().eventLoop());
         strap.channel(ctx.channel().getClass());
@@ -87,18 +83,18 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
             @Override
             public void initChannel(SocketChannel ch) {
                 ChannelPipeline pipe = ch.pipeline();
-                if (originalUri.toLowerCase().startsWith("https")) {
+                if (req.uri().toLowerCase().startsWith("https")) {
                     pipe.addLast("ssl", clientSslContext.newHandler(ch.alloc()));
                 }
-                pipe.addLast("log", new LoggingHandler(LogLevel.INFO));
+//                pipe.addLast("log", new LoggingHandler(LogLevel.INFO));
                 pipe.addLast("http", new HttpClientCodec());
+                pipe.addLast("aggregator", new HttpObjectAggregator(1048576));
                 pipe.addLast("back", new BackendHandler(ctx.channel()));
             }
         });
         ChannelFuture channelFuture = strap.connect(new InetSocketAddress(host, port));
         channelFuture.addListener(x -> {
-            var writeFuture = channelFuture.channel().writeAndFlush(req);
-            writeFuture.addListener(y -> channelFuture.channel().pipeline().remove("http"));
+            channelFuture.channel().writeAndFlush(req);
         });
     }
 
