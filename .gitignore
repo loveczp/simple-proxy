@@ -6,3 +6,9 @@
 /server/build/
 /server/bin/
 /browser-extension/.idea/
+/bin/**
+/build/**
+/.vscode
+/gradle
+/.gradle
+.DS*
