@@ -1,6 +1,5 @@
 package com.czp.proxy;
 
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
@@ -29,12 +28,12 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
             String host = hostportArray[0];
             Integer port = Integer.valueOf(hostportArray.length == 1 ? "80" : hostportArray[1]);
             if (method.equals("CONNECT") == true) {
-                //https proxy
+                // https proxy
                 createHttpsOutChannel(ctx, host, port);
             } else if (method.equals("GET") == true && req.uri().startsWith("/health")) {
                 handleHealthRequest(ctx, req);
             } else if (req.uri().contains(hostport)) {
-                //http proxy
+                // http proxy
                 createHttpOutChannel(ctx, host, port, req);
             } else {
                 ctx.fireExceptionCaught(new RuntimeException("wrong http request:" + msg));
@@ -64,13 +63,16 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
         channelFuture.addListener(f1 -> {
             var resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
             ctx.writeAndFlush(resp).addListener(f2 -> {
-                ctx.pipeline().remove("http");
-                ctx.pipeline().remove("aggregator");
+                if (ctx.pipeline().get("http") != null) {
+                    ctx.pipeline().remove("http");
+                }
+                if (ctx.pipeline().get("aggregator") != null) {
+                    ctx.pipeline().remove("aggregator");
+                }
             });
         });
         backendChannel = channelFuture.channel();
     }
-
 
     private void createHttpOutChannel(ChannelHandlerContext ctx, String host, Integer port, HttpRequest req) {
         Bootstrap strap = new Bootstrap();
@@ -84,7 +86,7 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
                 if (req.uri().toLowerCase().startsWith("https")) {
                     pipe.addLast("ssl", clientSslContext.newHandler(ch.alloc()));
                 }
-//                pipe.addLast("log", new LoggingHandler(LogLevel.INFO));
+                // pipe.addLast("log", new LoggingHandler(LogLevel.INFO));
                 pipe.addLast("http", new HttpClientCodec());
                 pipe.addLast("aggregator", new HttpObjectAggregator(1048576));
                 pipe.addLast("back", new BackendHandler(ctx.channel()));
