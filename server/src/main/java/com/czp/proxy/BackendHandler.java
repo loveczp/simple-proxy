@@ -3,7 +3,6 @@ package com.czp.proxy;
 
 import io.netty.channel.*;
 
-
 public class BackendHandler extends ChannelInboundHandlerAdapter {
     Channel frontChannel;
 
@@ -12,7 +11,7 @@ public class BackendHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
         frontChannel.writeAndFlush(msg);
     }
 }
