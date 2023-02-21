@@ -10,8 +10,8 @@ import io.netty.handler.codec.http.*;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
-import javax.net.ssl.SSLException;
 import java.security.cert.CertificateException;
+import javax.net.ssl.SSLException;
 
 public class ExampleSSLServer extends SimpleChannelInboundHandler<HttpObject> {
 
@@ -37,7 +37,6 @@ public class ExampleSSLServer extends SimpleChannelInboundHandler<HttpObject> {
 
         ch.closeFuture().sync();
     }
-
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, HttpObject msg) throws Exception {

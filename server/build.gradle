@@ -1,12 +1,12 @@
 plugins {
-	id 'com.github.johnrengelman.shadow' version '7.1.2'
+	id "com.diffplug.spotless" version "6.15.0"
 	id 'java'
 }
 
-
 group = 'com.czp.proxy'
 version = '0.1'
-sourceCompatibility = '17'
+sourceCompatibility = 17
+targetCompatibility = 17
 
 repositories {
 	mavenCentral()
@@ -17,6 +17,7 @@ dependencies {
 	implementation( 'io.netty:netty-example:4.1.87.Final'){
 		exclude group: "io.netty", module: "netty-tcnative"
 	}
+	implementation 'commons-cli:commons-cli:1.5.0'
 }
 
 
@@ -34,6 +35,16 @@ jar {
 	}
 }
 
-tasks.named('test') {
-	useJUnitPlatform()
+spotless {
+	java {
+		target fileTree('.') {
+			include '**/*.java'
+			exclude '**/build/**', '**/build-*/**'
+		}
+		toggleOffOn()
+		palantirJavaFormat()
+		removeUnusedImports()
+		trimTrailingWhitespace()
+		endWithNewline()
+	}
 }
