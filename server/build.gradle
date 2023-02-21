@@ -1,9 +1,7 @@
 plugins {
-	id 'com.github.johnrengelman.shadow' version '7.1.2'
 	id "com.diffplug.spotless" version "6.15.0"
 	id 'java'
 }
-
 
 group = 'com.czp.proxy'
 version = '0.1'
@@ -49,8 +47,4 @@ spotless {
 		trimTrailingWhitespace()
 		endWithNewline()
 	}
-}
-
-tasks.named('test') {
-	useJUnitPlatform()
 }
