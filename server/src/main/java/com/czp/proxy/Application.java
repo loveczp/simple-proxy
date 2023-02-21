@@ -14,15 +14,13 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.security.cert.CertificateException;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import javax.net.ssl.SSLException;
-
 import org.apache.commons.cli.*;
 
 public class Application {
@@ -33,7 +31,9 @@ public class Application {
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
             SslContext clientSslContext = SslContextBuilder.forClient().build();
-            SslContext serverSslContext = SslContextBuilder.forServer(paras.get("cert"), paras.get("key")).build();
+            SslContext serverSslContext = SslContextBuilder.forServer(
+                            (InputStream) paras.get("cert"), (InputStream) paras.get("key"))
+                    .build();
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
@@ -52,8 +52,8 @@ public class Application {
                     .option(ChannelOption.SO_BACKLOG, 128)
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
 
-            ChannelFuture f = b.bind(8080).sync();
-            System.out.println("server is up on port: " + 8080);
+            ChannelFuture f = b.bind((Integer) paras.get("port")).sync();
+            System.out.println("server is up on port: " + paras.get("port"));
             f.channel().closeFuture().sync();
         } finally {
             workerGroup.shutdownGracefully();
@@ -61,7 +61,7 @@ public class Application {
         }
     }
 
-    static Map<String, InputStream> parseParas(String[] args) throws FileNotFoundException, ParseException {
+    static Map<String, Object> parseParas(String[] args) throws FileNotFoundException, ParseException {
 
         Options options = new Options();
 
@@ -78,27 +78,38 @@ public class Application {
                 .hasArg()
                 .desc("set the path of key file")
                 .build();
+        Option port = Option.builder()
+                .longOpt("port")
+                .argName("port")
+                .hasArg()
+                .desc("set the server port")
+                .build();
         options.addOption(cert);
         options.addOption(key);
+        options.addOption(port);
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
+        Map<String, Object> returnArgs = new HashMap<>();
         if ((cmd.hasOption("cert") && cmd.hasOption("key") == false)
                 || (cmd.hasOption("cert") == false && cmd.hasOption("key"))) {
-            System.out.println("cert and key should either be both set or be not set");
             throw new RuntimeException("cert and key should either be both set or be not set");
         } else {
             if (cmd.hasOption("cert")) {
-                return Map.of("cert",
-                        new FileInputStream(cmd.getOptionValue("cert")),
-                        "key",
-                        new FileInputStream(cmd.getOptionValue("key")));
+                returnArgs.put("cert", new FileInputStream(cmd.getOptionValue("cert")));
+                returnArgs.put("key", new FileInputStream(cmd.getOptionValue("key")));
             } else {
-                return Map.of("cert",
-                        Application.class.getClassLoader().getResourceAsStream("cert.pem"),
-                        "key",
-                        Application.class.getClassLoader().getResourceAsStream("key.pem"));
+                returnArgs.put("cert", Application.class.getClassLoader().getResourceAsStream("cert.pem"));
+                returnArgs.put("key", Application.class.getClassLoader().getResourceAsStream("key.pem"));
             }
         }
+
+        if (cmd.hasOption("port")) {
+            returnArgs.put("port", Integer.valueOf(cmd.getOptionValue("port")));
+        } else {
+            returnArgs.put("port", 8080);
+        }
+
+        return returnArgs;
     }
 }
