@@ -7,7 +7,6 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 
@@ -34,10 +33,7 @@ public class ExampleToGoogle extends SimpleChannelInboundHandler<HttpObject> {
                 future.channel().writeAndFlush(request);
             }
         });
-
-
     }
-
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, HttpObject msg) throws Exception {

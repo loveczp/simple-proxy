@@ -6,7 +6,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.SslContext;
-
 import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
 
@@ -55,8 +54,7 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
         strap.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(SocketChannel ch) {
-                ch.pipeline()
-                        .addLast("back", new BackendHandler(ctx.channel()));
+                ch.pipeline().addLast("back", new BackendHandler(ctx.channel()));
             }
         });
         ChannelFuture channelFuture = strap.connect(new InetSocketAddress(host, port));
@@ -103,7 +101,6 @@ public class FrontHandler extends ChannelInboundHandlerAdapter {
         cause.printStackTrace();
         ctx.close();
     }
-
 
     void handleHealthRequest(ChannelHandlerContext ctx, HttpRequest req) {
         var content = "this is dummy data, for test only.";
